@@ -1,0 +1,3 @@
+-type dns_type() :: 'A' | 'AAAA'.
+-type dns_hostname() :: string().
+-record(dns_request, {type::dns_type(), hostname::dns_hostname()}).
