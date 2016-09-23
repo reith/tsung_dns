@@ -493,5 +493,5 @@ repeat | if | change_type | foreach | set_option | interaction )*>
 
 <!ATTLIST dns 
     type    (A | AAAA) #IMPLIED
-    ack     (no_ack | parse) #REQUIRED
+    ack     (global | local | no_ack | parse) #IMPLIED
     hostname CDATA #REQUIRED >

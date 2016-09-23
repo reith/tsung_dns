@@ -20,6 +20,8 @@
 -include_lib("tsung/include/ts_macros.hrl").
 -include_lib("kernel/src/inet_dns.hrl").
 
+-define(RESPONSE_TIMEOUT, 15000).
+
 %%----------------------------------------------------------------------
 %% Function: session_default/0
 %% Purpose: default parameters for session (ack_type and persistent)
@@ -57,11 +59,12 @@ new_session() ->
 %%----------------------------------------------------------------------
 get_message(Req = #dns_request{type=TypeStr, hostname=Hostname},
             _State = #state_rcv{session=_Sess}) ->
-  ?LOGF("Sending DNS request for ~p ~p", [TypeStr, Hostname], ?INFO),
+  ?LOGF("Sending DNS request for ~p ~p by ~p", [TypeStr, Hostname, self()], ?INFO),
   TypeAtom = erlang:list_to_atom(string:to_lower(TypeStr)),
   Bin = inet_dns:encode(#dns_rec{header=#dns_header{rd=1},
                                  qdlist=[#dns_query{domain=Hostname,
                                                     type=TypeAtom, class=in}]}),
+  timer:exit_after(?RESPONSE_TIMEOUT, timeout),
   {Bin, Req};
 get_message(Req, State) ->
   ?LOGF("Got message ~p State ~p~n", [Req, State], ?DEB),
@@ -91,10 +94,11 @@ parse(Data, State=#state_rcv{session=#dns_request{hostname=Hostname, type=Type},
   end,
   {State#state_rcv{ack_done=true, datasize = size(Data)}, [], true};
 parse(Data, State) ->
-  ?LOGF("Unmatched response ~p ~p~n", [Data, State], "ERROR"),
+  ?LOGF("Unmatched response ~p ~p~n", [Data, State], ?ERR),
   {State#state_rcv{ack_done=true, datasize = size(Data)}, [], true}.
 
 parse_bidi(Data, State) ->
+  ?LOGF("in parse bidi ~p ~p", [Data, State], ?NOTICE),
   ts_plugin:parse_bidi(Data, State).
 
 %%----------------------------------------------------------------------
