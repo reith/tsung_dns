@@ -20,7 +20,6 @@
 -include_lib("tsung/include/ts_macros.hrl").
 -include_lib("kernel/src/inet_dns.hrl").
 
--define(RESPONSE_TIMEOUT, 15000).
 
 %%----------------------------------------------------------------------
 %% Function: session_default/0
@@ -64,7 +63,6 @@ get_message(Req = #dns_request{type=TypeStr, hostname=Hostname},
   Bin = inet_dns:encode(#dns_rec{header=#dns_header{rd=1},
                                  qdlist=[#dns_query{domain=Hostname,
                                                     type=TypeAtom, class=in}]}),
-  timer:exit_after(?RESPONSE_TIMEOUT, timeout),
   {Bin, Req};
 get_message(Req, State) ->
   ?LOGF("Got message ~p State ~p~n", [Req, State], ?DEB),
