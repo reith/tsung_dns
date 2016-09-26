@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<!DOCTYPE tsung SYSTEM "tsung-1.0.dtd">
+<tsung loglevel="notice" dumptraffic="false" version="1.0">
+
+  <clients>
+    <client host="localhost" maxusers="30000" use_controller_vm="true"/>
+  </clients>
+
+  <servers>
+    <server host="10.2.0.1" port="53" type="udp"></server>
+    <!-- <server host="10.2.0.1" port="5353" type="udp"></server> -->
+  </servers>
+
+  <load>
+    <arrivalphase phase="1" duration="10" unit="second">
+      <users arrivalrate="1" unit="second"></users>
+    </arrivalphase>
+    <arrivalphase phase="2" duration="20" unit="second">
+      <users arrivalrate="100" unit="second"></users>
+    </arrivalphase>
+    <arrivalphase phase="3" duration="20" unit="second">
+      <users arrivalrate="200" unit="second"></users>
+    </arrivalphase>
+    <arrivalphase phase="4" duration="20" unit="second">
+      <users arrivalrate="300" unit="second"></users>
+    </arrivalphase>
+    <arrivalphase phase="5" duration="20" unit="second">
+      <users arrivalrate="400" unit="second"></users>
+    </arrivalphase>
+    <arrivalphase phase="6" duration="20" unit="second">
+      <users arrivalrate="500" unit="second"></users>
+    </arrivalphase>
+  </load>
+
+ <options>
+   <option name="udp_snd_buffer" value="1400"></option>
+   <option name="udp_rcv_buffer" value="1400"></option>
+   <option name="idle_timeout" value="15000"></option>
+ </options>
+
+ <sessions>
+   <session probability="100" name="burst-test" type="ts_dns">
+    <transaction name="normal">
+      <request>
+        <dns ack="parse" type='A' hostname="google.com"></dns>
+      </request>
+    </transaction>
+    <transaction name="cached">
+      <request>
+              <match do="log" when="nomatch">\x{c0}\x{a8}DD</match>
+              <dns ack="parse" type='A' hostname="s6868.localdomain"></dns>
+      </request>
+    </transaction>
+   </session>
+ </sessions>
+</tsung>
