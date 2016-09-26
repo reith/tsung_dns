@@ -46,7 +46,7 @@ decode_buffer(Buffer, #dns_request{}) ->
 %% Returns: #dns_request{} or []
 %%----------------------------------------------------------------------
 new_session() ->
-  ?LOG("new_session", ?NOTICE),
+  ?LOG("new_session", ?DEB),
   #dns_request{type="A"}.
 
 
@@ -57,8 +57,9 @@ new_session() ->
 %% Returns: binary
 %%----------------------------------------------------------------------
 get_message(Req = #dns_request{type=TypeStr, hostname=Hostname},
-            _State = #state_rcv{session=_Sess}) ->
+            _State = #state_rcv{proto_opts=ProtoOpts}) ->
   ?LOGF("Sending DNS request for ~p ~p by ~p", [TypeStr, Hostname, self()], ?INFO),
+  erlang:send_after(ProtoOpts#proto_opts.idle_timeout, self(), timeout),
   TypeAtom = erlang:list_to_atom(string:to_lower(TypeStr)),
   Bin = inet_dns:encode(#dns_rec{header=#dns_header{rd=1},
                                  qdlist=[#dns_query{domain=Hostname,
@@ -75,9 +76,6 @@ get_message(Req, State) ->
 %% Args:  Data (binary), State (#state_rcv)
 %% Returns: {NewState, Options for socket (list), Close = true|false}
 %%----------------------------------------------------------------------
-parse(closed, State) ->
-  ?LOG("Socket closed", ?DEB),
-  {State#state_rcv{ack_done = true, datasize=0}, [], true};
 parse(Data, State=#state_rcv{session=#dns_request{hostname=Hostname, type=Type},
                              acc = [], datasize=0}) ->
   ?LOGF("Got data from resolver ~w~n", [Data], ?DEB),
@@ -109,15 +107,13 @@ parse_config(Element, Conf) ->
 	ts_config_dns:parse_config(Element, Conf).
  
 
--spec dump(protocol, {Request::#ts_request{},Session::term(), Id::integer(),
-                      Host::string(),DataSize::integer()}) -> ok.
 %%----------------------------------------------------------------------
 %% Function: dump/2
 %% Purpose:  log request and response summary
 %% Returns:  ok.
 %%----------------------------------------------------------------------
 dump(A, B) ->
-  % ?LOGF("dump ~p ~p~n", [A, B], ?DEB),
+  ?LOGF("dump ~p ~p~n", [A, B], ?DEB),
   ts_plugin:dump(A, B).
 
 
